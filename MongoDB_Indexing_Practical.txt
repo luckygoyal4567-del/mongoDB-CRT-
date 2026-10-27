@@ -1,0 +1,60 @@
+MongoDB INDEXING PRACTICAL - CMD / NOTEPAD
+========================================
+
+STEP 1: Open Windows Command Prompt (CMD).
+Type:
+  mongosh
+
+NOTE: The commands below are MongoDB shell JavaScript. Run them INSIDE mongosh, not directly in Windows CMD.
+
+STEP 2: Select database and add sample documents:
+use college_db
+
+db.students.insertMany([
+  {name:"Amit",age:20,course:"BTech",marks:85,skills:["Python","Java"]},
+  {name:"Rahul",age:21,course:"BCA",marks:78,skills:["C++","Python"]},
+  {name:"Priya",age:20,course:"BTech",marks:92,skills:["Java","MongoDB"]},
+  {name:"Neha",age:22,course:"MCA",marks:88,skills:["Python","MongoDB"]}
+])
+
+1. INDEX CREATION - Speeds up searches:
+db.students.createIndex({name:1})
+
+2. INDEX TYPES:
+Single field:
+db.students.createIndex({age:1})
+
+Compound:
+db.students.createIndex({course:1,marks:-1})
+
+Multikey (array field):
+db.students.createIndex({skills:1})
+
+3. EXPLAIN PLAN - Check execution statistics:
+db.students.find({name:"Amit"}).explain("executionStats")
+
+4. HIDDEN INDEX - Test removing an index from query planning without dropping it:
+db.students.createIndex({marks:1},{hidden:true})
+To unhide:
+db.students.unhideIndex("marks_1")
+
+5. ERROR HANDLING - Existing index may cause options conflict:
+try { db.students.createIndex({name:1},{unique:true}) } catch(e) { print("Index Error: " + e.message) }
+
+6. INDEX VALIDATION:
+db.students.getIndexes()
+db.students.find({age:20}).explain("executionStats")
+Look for IXSCAN (index scan) versus COLLSCAN (collection scan). For tiny collections, MongoDB may still choose COLLSCAN.
+
+7. OPTIMIZING INDEX ORDER:
+db.students.createIndex({course:1,age:1,marks:-1})
+db.students.find({course:"BTech",age:20}).sort({marks:-1}).explain("executionStats")
+General guideline: equality fields, then sort fields, then range fields; actual performance depends on queries and data.
+
+STEP 3: Exit MongoDB shell:
+exit
+
+STEP 4: Save in Notepad:
+Open Notepad, paste this text, File > Save As > MongoDB_Indexing_Practical.txt.
+
+IMPORTANT: This file is an instructional script; it has not been executed against your local MongoDB server.

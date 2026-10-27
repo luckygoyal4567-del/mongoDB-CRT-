@@ -1,0 +1,66 @@
+MongoDB Replication - CMD and Notepad Practical
+
+STEP 1: Open CMD
+mongosh
+use college_db
+
+STEP 2: Purpose and Setup of Replication
+Purpose: Replication maintains multiple copies of data for high availability and automatic failover.
+Exit mongosh:
+exit
+
+Create directories in CMD:
+mkdir C:\mongo-replica\db1
+mkdir C:\mongo-replica\db2
+mkdir C:\mongo-replica\db3
+
+Run each command in a SEPARATE CMD window (mongod must be installed):
+mongod --replSet rs0 --port 27017 --dbpath C:\mongo-replica\db1 --bind_ip localhost
+mongod --replSet rs0 --port 27018 --dbpath C:\mongo-replica\db2 --bind_ip localhost
+mongod --replSet rs0 --port 27019 --dbpath C:\mongo-replica\db3 --bind_ip localhost
+
+In fourth CMD window:
+mongosh --port 27017
+
+Initialize replica set:
+rs.initiate({_id:"rs0",members:[{_id:0,host:"localhost:27017"},{_id:1,host:"localhost:27018"},{_id:2,host:"localhost:27019"}]})
+rs.status()
+
+STEP 3: Primary and Secondary
+Primary handles writes; secondaries replicate data and can be elected primary.
+rs.status()
+db.hello().primary
+
+STEP 4: Read Preference
+Primary: default, reads from primary.
+secondaryPreferred: prefer secondary, fallback to primary; reads may be stale.
+db.getMongo().setReadPref("secondaryPreferred")
+db.students.find()
+db.getMongo().setReadPref("primary")
+
+STEP 5: Write Concern
+Majority acknowledgement improves durability across replica-set members.
+use college_db
+db.students.insertOne({name:"Amit",course:"BTech"},{writeConcern:{w:"majority",wtimeout:5000}})
+
+STEP 6: Elections
+When primary fails, eligible members elect a new primary if a voting majority is available.
+rs.status()
+rs.stepDown(60)
+
+Reconnect if disconnected:
+mongosh "mongodb://localhost:27017,localhost:27018,localhost:27019/?replicaSet=rs0"
+db.hello().primary
+
+STEP 7: Validation
+rs.status()
+rs.conf()
+db.hello()
+
+NOTES:
+- Requires MongoDB Server (mongod), not just mongosh or Compass.
+- Stop any existing service on port 27017 before launching these processes, or use free ports.
+- Each mongod process stays open in its own CMD window.
+- The initial election can take several seconds.
+- A replica set is not a substitute for backups.
+- This localhost configuration is for learning only; production requires authentication, network security and separate failure domains.
